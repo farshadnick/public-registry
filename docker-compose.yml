@@ -34,22 +34,6 @@ services:
     networks:
       - registry-network
 
-  nginx:
-    image: nginx:alpine
-    container_name: registry-proxy
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - nexus
-      - landing
-    networks:
-      - registry-network
-
 volumes:
   nexus-data:
 
