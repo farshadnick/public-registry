@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  nexus:
+    image: sonatype/nexus3:latest
+    container_name: nexus-registry
+    restart: always
+    ports:
+      - "8081:8081"  # Nexus UI
+      - "8082:8082"  # Docker registry (hosted)
+      - "8083:8083"  # Docker registry (group)
+      - "8084:8084"  # npm registry
+      - "8085:8085"  # PyPI registry
+    volumes:
+      - nexus-data:/nexus-data
+    environment:
+      - INSTALL4J_ADD_VM_PARAMS=-Xms2g -Xmx2g -XX:MaxDirectMemorySize=2g
+    networks:
+      - registry-network
+
+  landing:
+    build:
+      context: ./landing
+      dockerfile: Dockerfile
+    container_name: registry-landing
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXUS_URL=http://nexus:8081
+    depends_on:
+      - nexus
+    networks:
+      - registry-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: registry-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - nexus
+      - landing
+    networks:
+      - registry-network
+
+volumes:
+  nexus-data:
+
+networks:
+  registry-network:
+    driver: bridge
+
